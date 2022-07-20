@@ -1,0 +1,73 @@
+* {
+    margin : 0px;
+    padding : 0px;
+    box-sizing: border-box;
+    border: none;
+}
+
+html {
+    font-family: 'arial', sans-serif;
+}
+
+body {
+    background-color: #121a12;
+}
+
+#game {
+    margin: 40px;
+}
+
+.row {
+    font-size: 0px;
+}
+
+.box {
+    display: inline-block;
+    margin: 1px;
+    width: 30px;
+    height: 30px;
+    vertical-align: top;
+    text-align: center;
+    line-height: 30px;
+    font-size: 20px;
+    border: 1px solid #6ea968;
+    background-color: #2a6034;
+    cursor: pointer;
+}
+
+.open {
+    border: none;
+    background-color: #1d2e20;
+}
+
+.one {
+    color: #51d960;
+}
+
+.two {
+    color: #c1b929;
+}
+
+.three {
+    color: #ff5454;
+}
+
+.four {
+    color: #258fff;
+}
+
+.five {
+    color: #e833bb;
+}
+
+.six {
+    color: #ffa74a;
+}
+
+.seven {
+    color: #24dddd;
+}
+
+.eight {
+    color: #d0d0d0;
+}
