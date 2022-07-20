@@ -1,8 +1,11 @@
 (() => { 'use strict';
 
 const mineRate = 0.16;
-const rows = 20;
-const cols = 20;
+const rows = 14;
+const cols = 14;
+
+let mineFreeBoxes;
+let openedBoxes = 0;
 
 const hasMine = () => Math.random() <= mineRate ? 'm' : 0;
 const colorClasses = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight'];
@@ -16,15 +19,24 @@ attachBoxEvents();
 // Functions *************************************************************************
 
 function createGame(rows, cols) {
-    let r = rows;
     const gameArray = [];
+    let totalMines = 0;
+    let r = rows;
 
     while (r--) {
-        let i = cols;
         const a = [];
-        while (i--) a.push(hasMine());
+        let i = cols;
+
+        while (i--) {
+            const temp = hasMine();
+            temp && ++totalMines;
+            a.push(temp);
+        }
+
         gameArray.push(a);
     }
+
+    mineFreeBoxes = (rows * cols) - totalMines;
 
     for (let i = 0; i < rows; ++i) {
         for (let j = 0; j < cols; ++j) {
@@ -82,38 +94,36 @@ function attachBoxEvents() {
         for (let j = 0; j < cols; ++j) {
             gameGrid[i][j].addEventListener('click', e => {
                 e.stopPropagation();
-                openBox(i, j);
+                handleClick(i, j);
             }, true);
         }
     }
 }
 
-function openBox(i, j) {
+function handleClick(i, j) {
     if (gameArray[i][j] === 'o') return;
     if (gameArray[i][j] === 'm') throw 'Opened a mine: Game over!';
 
     if (gameArray[i][j] === 0) {
-        gameGrid[i][j].classList.add('open');
-        gameArray[i][j] = 'o';
+        openBox(i, j, false);
 
         for (let temp_i = i - 1; temp_i <= i + 1; ++temp_i) {
             for (let temp_j = j - 1; temp_j <= j + 1; ++temp_j) {
                 if(gameArray[temp_i] === undefined || gameArray[temp_i][temp_j] === undefined) continue;
 
-                if (gameArray[temp_i][temp_j] === 0) {
-                    openBox(temp_i, temp_j);
-                } else if (gameArray[temp_i][temp_j] !== 'o') {
-                    gameGrid[temp_i][temp_j].textContent = gameArray[temp_i][temp_j];
-                    gameGrid[temp_i][temp_j].classList.add('open');
-                    gameArray[temp_i][temp_j] = 'o';
-                }
+                if (gameArray[temp_i][temp_j] === 0) handleClick(temp_i, temp_j);
+                else if (gameArray[temp_i][temp_j] !== 'o') openBox(temp_i, temp_j);
             }
         }
-    } else {
-        gameGrid[i][j].textContent = gameArray[i][j];
-        gameGrid[i][j].classList.add('open');
-        gameArray[i][j] = 'o';
-    }
+    } else openBox(i, j);
+}
+
+function openBox(i, j, showCount = true) {
+    if (showCount) gameGrid[i][j].textContent = gameArray[i][j];
+    gameGrid[i][j].classList.add('open');
+    gameArray[i][j] = 'o';
+
+    ++openedBoxes === mineFreeBoxes && alert('Success!');
 }
 
 })();
