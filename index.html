@@ -4,15 +4,35 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Minesweeper</title>
-    <link rel="shortcut icon" type="image/x-icon" href="favicon.svg" />
+    <link rel="shortcut icon" type="image/x-icon" href="res/favicon.svg" />
     <link rel="stylesheet" href="style.css">
     <script type="text/javascript" src="app.js" defer></script>
 </head>
 <body>
     <header>            
-        <img id="logo" src="minesweeper_logo.svg" alt="minesweeper logo">
+        <img id="logo" src="res/minesweeper_logo.svg" alt="minesweeper logo">
     </header>
-    <div id="game"></div>
+
+    <main>
+        <div id="configure">
+            <h3>New Game</h3>
+            <ul id="gameSizes" class="inlineList">
+                <li>
+                    <button id="small"><img src="res/small.svg" alt="small game icon"></button>
+                    <label for="small">Small</label>
+                </li><li>
+                    <button id="medium"><img src="res/medium.svg" alt="medium game icon"></button>
+                    <label for="medium">Medium</label>
+                </li><li>
+                    <button id="large"><img src="res/large.svg" alt="large game icon"></button>
+                    <label for="large">Large</label>
+                </li>
+            </ul>
+        </div>
+
+        <div id="game" class="off"></div>
+    </main>
+
     <footer>
         <span id="copyright"></span>
     </footer>

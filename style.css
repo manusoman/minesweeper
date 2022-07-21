@@ -19,13 +19,55 @@ header {
     padding: 20px;
 }
 
+main {
+    padding: 40px;    
+}
+
+.off {
+    display: none;
+}
+
+.inlineList {
+    list-style: none;
+}
+
+.inlineList > li {
+    display: inline-block;
+}
+
 #logo {
     display: block;
     margin: 0px auto;
 }
 
+#configure {
+    text-align: center;
+}
+
+#configure > h3 {
+    margin-bottom: 20px;
+    color: #b7d2bc;
+}
+
+#gameSizes > li + li {
+    margin-left: 16px;
+}
+
+#gameSizes > li > button {
+    width: 80px;
+    height: 80px;
+    background-color: #253625;
+    cursor: pointer;
+}
+
+#gameSizes > li > label {
+    display: block;
+    margin-top: 10px;
+    font-size: 14px;
+    color: #6b766d;
+}
+
 #game {
-    margin: 40px;
     text-align: center;
 }
 
