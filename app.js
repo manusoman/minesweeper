@@ -35,13 +35,13 @@ function addCreateGameEvents(configs) {
     configs.forEach(conf => {
         document.getElementById(conf.type).addEventListener('click', e => {            
             gameFrame = document.createElement('div');
+            gameFrame.classList.add(conf.type);
             openedBoxes = 0;
 
             const gameArray = createGame(conf.size, conf.size);
             const gameGrid = createGrid(gameFrame, gameArray);
 
             attachBoxEvents(gameGrid, gameArray, gameFinish);
-
             gameEle.appendChild(gameFrame);
             configureEle.classList.add('off');
             gameEle.classList.remove('off');
@@ -160,7 +160,7 @@ function handleClick(i, j, gameArray, gameFinishCB, openBox) {
             for (let temp_j = j - 1; temp_j <= j + 1; ++temp_j) {
                 if (gameArray[temp_i] === undefined || gameArray[temp_i][temp_j] === undefined) continue;
 
-                if (gameArray[temp_i][temp_j] === 0) handleClick(temp_i, temp_j);
+                if (gameArray[temp_i][temp_j] === 0) handleClick(temp_i, temp_j, gameArray, gameFinishCB, openBox);
                 else if (gameArray[temp_i][temp_j] !== 'o') openBox(temp_i, temp_j);
             }
         }
