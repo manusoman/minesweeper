@@ -1,5 +1,7 @@
 (() => { 'use strict';
 
+putCopyright();
+
 const mineRate = 0.16;
 const rows = 14;
 const cols = 14;
@@ -124,6 +126,21 @@ function openBox(i, j, showCount = true) {
     gameArray[i][j] = 'o';
 
     ++openedBoxes === mineFreeBoxes && alert('Success!');
+}
+
+function putCopyright() {
+    let year = null;
+    let spanEle;
+
+    fetch('https://manusoman.github.io/MindLogs/settings.json')
+	.then(res => res.json())
+	.then(data => year = data.current_year)
+	.catch(err => {
+        year = new Date().getFullYear();
+        console.error(err.message);
+    }).finally(() => spanEle.textContent = `© ${year}, Manu Soman`);
+
+    spanEle = document.getElementById('copyright');
 }
 
 })();
