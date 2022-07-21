@@ -126,6 +126,18 @@ main {
     color: #d0d0d0;
 }
 
+.small {
+    min-width: 450px;
+}
+
+.medium {
+    min-width: 708px;    
+}
+
+.large {
+    min-width: 962px;    
+}
+
 footer {
     position: sticky;
     padding: 20px;
