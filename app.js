@@ -1,6 +1,6 @@
 (() => { 'use strict';
 
-const configs = [
+const gameSizes = [
     { type : 'small', rows : 14, cols : 14 },
     { type : 'medium', rows : 22, cols : 22 },
     { type : 'large', rows : 30, cols : 30 }
@@ -13,14 +13,14 @@ let mineFreeBoxes;
 let openedBoxes = 0;
 
 putCopyright();
-addCreateGameEvents(configs);
+addCreateGameEvents(gameSizes);
 
 
 // Functions *************************************************************************
 
 const hasMine = () => Math.random() <= mineRate ? 'm' : 0;
 
-function addCreateGameEvents(configs) {
+function addCreateGameEvents(gameSizes) {
     const gameEle = document.getElementById('game');
     const configureEle = document.getElementById('configure');
     let gameFrame;
@@ -32,13 +32,13 @@ function addCreateGameEvents(configs) {
         configureEle.classList.remove('off');
     };
 
-    configs.forEach(conf => {
-        document.getElementById(conf.type).addEventListener('click', e => {
+    gameSizes.forEach(size => {
+        document.getElementById(size.type).addEventListener('click', e => {
             gameFrame = document.createElement('div');
-            gameFrame.classList.add(conf.type);
+            gameFrame.classList.add(size.type);
             openedBoxes = 0;
 
-            const gameGrid = createGrid(gameFrame, conf.rows, conf.cols);
+            const gameGrid = createGrid(gameFrame, size.rows, size.cols);
 
             attachBoxEvents(gameGrid, gameFinish);
             gameEle.appendChild(gameFrame);
