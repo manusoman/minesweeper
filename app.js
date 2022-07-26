@@ -7,10 +7,14 @@ const gameSizes = [
 ];
 
 const mineRate = 0.16;
+const expl_strength = 10;
 const colorClasses = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight'];
 
+let gameFrame;
+let mineMap;
 let mineFreeBoxes;
-let openedBoxes = 0;
+let openedBoxes;
+let explosionBox;
 
 putCopyright();
 addCreateGameEvents(gameSizes);
@@ -23,19 +27,21 @@ const hasMine = () => Math.random() <= mineRate ? 'm' : 0;
 function addCreateGameEvents(gameSizes) {
     const gameEle = document.getElementById('game');
     const configureEle = document.getElementById('configure');
-    let gameFrame;
+    const gameFinishBox = document.getElementById('gameFinish');
+    const message = document.getElementById('message');
+    const newGameButton = document.getElementById('newGame');
 
     const gameFinish = isSuccess => {
-        isSuccess ? alert('Success!') : alert('You lost :(');
-        gameEle.removeChild(gameFrame);
-        gameEle.classList.add('off');
-        configureEle.classList.remove('off');
+        message.textContent = isSuccess ? 'Success!' : 'You lost :(';
+        gameFinishBox.classList.add('visible');
     };
 
     gameSizes.forEach(size => {
         document.getElementById(size.type).addEventListener('click', e => {
             gameFrame = document.createElement('div');
             gameFrame.classList.add(size.type);
+
+            mineMap = [];
             openedBoxes = 0;
 
             const gameGrid = createGrid(gameFrame, size.rows, size.cols);
@@ -47,6 +53,14 @@ function addCreateGameEvents(gameSizes) {
             e.stopPropagation();
         }, true);
     });
+
+    newGameButton.addEventListener('click', e => {
+        e.stopPropagation();
+        gameFinishBox.classList.remove('visible');
+        gameEle.removeChild(gameFrame);
+        gameEle.classList.add('off');
+        configureEle.classList.remove('off');
+    }, true);
 }
 
 function createGrid(parentEle, rows, cols) {
@@ -98,7 +112,33 @@ function attachBoxEvents(gameGrid, gameFinishCB) {
         if (val === 'o') return;
     
         if (val === 'm') {
-            gameFinishCB(false);
+            const { hypot } = Math;
+            const explosion_delay = 30;
+            const distances = mineMap.map(cord => hypot(cord[0] - i, cord[1] - j));
+            let explosion_time = 0;
+
+            explosionBox = document.createElement('div');
+            explosionBox.classList.add('explosionBox');
+            document.body.appendChild(explosionBox);
+
+            // Sort mineMap array based on distances array and then
+            // explode them with the given delay
+            sortDistances(distances);
+
+            mineMap.forEach(cord => {
+                setTimeout(() => {
+                    explode(cord[0], cord[1], gameArray, gameGrid);
+                }, explosion_time);
+
+                explosion_time += explosion_delay;
+            });
+
+            setTimeout(() => {
+                document.body.removeChild(explosionBox);
+                explosionBox = null;
+                gameFinishCB(false);
+            }, explosion_time);
+
             return;
         }
     
@@ -107,11 +147,10 @@ function attachBoxEvents(gameGrid, gameFinishCB) {
         if (val > 0) return;
     
         for (let temp_i = i - 1; temp_i <= i + 1; ++temp_i) {
+            if (gameArray[temp_i] === undefined) continue;
+
             for (let temp_j = j - 1; temp_j <= j + 1; ++temp_j) {
-                const temp_val = gameArray[temp_i] === undefined ||
-                                    gameArray[temp_i][temp_j] === undefined ?
-                                    undefined : gameArray[temp_i][temp_j];
-    
+                const temp_val = gameArray[temp_i][temp_j];    
                 if (temp_val === undefined) continue;
     
                 if (temp_val === 0) handleClick(temp_i, temp_j);
@@ -119,22 +158,41 @@ function attachBoxEvents(gameGrid, gameFinishCB) {
             }
         }
     }
-    
+
     function openBox(i, j, val) {
         const box = gameGrid[i][j];
-
-        if (val > 0) box.textContent = val;
-
-        box.classList.add('open');
+        openBoxUI(box, val);
         gameArray[i][j] = 'o';
-
         ++openedBoxes === mineFreeBoxes && gameFinishCB(true);
+    }
+}
+    
+function openBoxUI(box, val, isBlast) {
+    if (val > 0) box.textContent = val;
+    box.classList.add(isBlast ? 'blast' : 'open');
+}
+
+function sortDistances(distances) {
+    const len = distances.length;
+
+    for (let i = 0; i < len - 1; ++i) {
+        for (let j = i + 1; j < len; ++j) {
+            if (distances[i] <= distances[j]) continue;
+
+            const temp1 = distances[i];
+            const temp2 = mineMap[i];
+
+            distances[i] = distances[j];
+            distances[j] = temp1;
+
+            mineMap[i] = mineMap[j];
+            mineMap[j] = temp2;
+        }
     }
 }
 
 function createGame(rows, cols, clickedRow, clickedCol) {
     const gameArray = [];
-    let totalMines = 0;
 
     for (let i = 0; i < rows; ++i) {
         const a = [];
@@ -145,7 +203,7 @@ function createGame(rows, cols, clickedRow, clickedCol) {
                 a.push(0);
             } else {
                 const temp = hasMine();
-                temp && ++totalMines;
+                temp && mineMap.push([i, j]);
                 a.push(temp);
             }
         }
@@ -153,22 +211,23 @@ function createGame(rows, cols, clickedRow, clickedCol) {
         gameArray.push(a);
     }
 
-    mineFreeBoxes = (rows * cols) - totalMines;
+    mineFreeBoxes = (rows * cols) - mineMap.length;
 
     for (let i = 0; i < rows; ++i) {
         for (let j = 0; j < cols; ++j) {
             if (gameArray[i][j] === 'm') continue;
 
-            let mineCount = 0;
+            let sorroundingMines = 0;
 
             for (let temp_i = i - 1; temp_i <= i + 1; ++temp_i) {
+                if (gameArray[temp_i] === undefined) continue;
                 for (let temp_j = j - 1; temp_j <= j + 1; ++temp_j) {                    
-                    if (gameArray[temp_i] === undefined || gameArray[temp_i][temp_j] === undefined) continue;
-                    gameArray[temp_i][temp_j] === 'm' && ++mineCount;
+                    if (gameArray[temp_i][temp_j] === undefined) continue;
+                    gameArray[temp_i][temp_j] === 'm' && ++sorroundingMines;
                 }
             }
 
-            gameArray[i][j] = mineCount;
+            gameArray[i][j] = sorroundingMines;
         }
     }
 
@@ -189,6 +248,64 @@ function styleMineCounts(gameGrid, gameArray) {
             }
         }
     }
+}
+
+function explode(i, j, gameArray, gameGrid) {
+    // create the explosion box
+    const box = gameGrid[i][j];
+    const c_left = box.offsetLeft;
+    const c_top = box.offsetTop;
+    const explBox = create_explBox(c_left, c_top);
+
+    // animate the box
+    explosionBox.appendChild(explBox);
+    setTimeout(() => {
+        openBoxUI(gameGrid[i][j], gameArray[i][j], true);
+        gameArray[i][j] = 'o';
+        set_box_translation(explBox, c_left, c_top);
+    }, 0);
+    
+
+    // also knock off the sorrounding boxes
+    for (let a = i - 1; a <= i + 1; ++a) {
+        if (gameArray[a] === undefined) continue;
+
+        for (let b = j - 1; b <= j + 1; ++b) {
+            const val = gameArray[a][b];
+
+            if(val === undefined || val === 'o' || val === 'm') continue;
+            
+            const box = gameGrid[a][b];
+            const left = box.offsetLeft;
+            const top = box.offsetTop;
+            const explBox = create_explBox(left, top);
+
+            // animate the box
+            explosionBox.appendChild(explBox);
+            setTimeout(() => {
+                openBoxUI(gameGrid[a][b], gameArray[a][b], true);
+                gameArray[a][b] = 'o';
+                set_box_translation(explBox, left, top, c_left, c_top);
+            }, 0);            
+        }
+    }
+}
+
+function create_explBox(left, top) {
+    const explBox = document.createElement('div');
+    explBox.style.left = left + 'px';
+    explBox.style.top = top + 'px';
+    explBox.classList.add('explBox');
+    return explBox;
+}
+
+function set_box_translation(explBox, x, y, cx = x - 30, cy = y - 30) {
+    const x_offset = (x - cx) * expl_strength;
+    const y_offset = (y - cy) * expl_strength;
+
+    explBox.style.left = x + x_offset + 'px';
+    explBox.style.top = y + y_offset + 'px';
+    explBox.style.opacity = 0;
 }
 
 function putCopyright() {
