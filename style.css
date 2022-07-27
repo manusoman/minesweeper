@@ -79,8 +79,6 @@ main {
 .box, .explBox {
     width: 30px;
     height: 30px;
-    border: 1px solid #6ea968;
-    background-color: #2a6034;
 }
 
 .box {
@@ -90,11 +88,14 @@ main {
     text-align: center;
     line-height: 30px;
     font-size: 16px;
+    border: 1px solid #6ea968;
+    background-color: #2a6034;
     cursor: pointer;
 }
 
 .explBox {
     position: absolute;
+    background-color: #900;
     opacity: 1;
     transition: left 0.3s ease-out, top 0.3s ease-out, opacity 0.3s ease-in;
 }
@@ -136,7 +137,30 @@ main {
     color: #d0d0d0;
 }
 
-.blast {
+@keyframes mineblast {    
+    from {
+        background-color: #844c05;
+    }
+    
+    50% {
+        background-color: #900;
+    }
+    
+   to {
+        background-color: #470000;
+    }
+}
+
+.minebox {
+    border: none;
+    animation-name: mineblast;
+    animation-duration: 3s;
+    animation-timing-function: ease-in-out;
+    animation-direction: alternate;
+    animation-iteration-count: infinite;
+}
+
+.nearBox {
     border: none;
     color: #ac2121;
     background-color: black;
