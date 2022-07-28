@@ -20,30 +20,33 @@ let mineMap;
 let mineFreeBoxes;
 let openedBoxes;
 let explosionBox;
+let gameFinished;
+let handleClick;
 
 putCopyright();
-addCreateGameEvents(gameSizes);
+attach_CreateGameEvents(gameSizes);
 
 
 // Functions *************************************************************************
 
 const hasMine = () => Math.random() <= mineRate ? 'm' : 0;
-const gameFinish = isSuccess => {
-    gameGrid = undefined;
-    gameArray = undefined;
-    mineMap = undefined;
+const finishGame = isSuccess => {
+    handleClick = () => undefined;
+    gameFinished = true;
+    gameArray = null;
 
-    mineFreeBoxes = undefined;
-    openedBoxes = 0;
-
-    document.body.removeChild(explosionBox);
-    explosionBox = undefined;
-
-    message.textContent = isSuccess ? 'Success!' : 'You lost :(';
-    gameFinishBox.classList.add('visible');
+    if (isSuccess) {
+        message.textContent = 'Success!';
+    } else {
+        document.body.removeChild(explosionBox);
+        explosionBox = undefined;
+        message.textContent = 'You lost :(';
+    }
+    
+    gameFinishBox.classList.remove('off');
 };
 
-function addCreateGameEvents(gameSizes) {
+function attach_CreateGameEvents(gameSizes) {
     const gameEle = document.getElementById('game');
     const configureEle = document.getElementById('configure');
     const newGameButton = document.getElementById('newGame');
@@ -52,10 +55,10 @@ function addCreateGameEvents(gameSizes) {
         document.getElementById(size.type).addEventListener('click', e => {
             gameFrame = document.createElement('div');
             gameFrame.classList.add(size.type);
-
+            
+            gameFinished = false;
             mineMap = [];
             openedBoxes = 0;
-
             gameGrid = createGrid(gameFrame, size.rows, size.cols);
 
             attachBoxEvents();
@@ -68,7 +71,7 @@ function addCreateGameEvents(gameSizes) {
 
     newGameButton.addEventListener('click', e => {
         e.stopPropagation();
-        gameFinishBox.classList.remove('visible');
+        gameFinishBox.classList.add('off');
         gameEle.removeChild(gameFrame);
         gameEle.classList.add('off');
         configureEle.classList.remove('off');
@@ -102,6 +105,8 @@ function attachBoxEvents() {
     const rows = gameGrid.length;
     const cols = gameGrid[0].length;
 
+    handleClick = boxClickHandler;
+
     for (let i = 0; i < rows; ++i) {
         for (let j = 0; j < cols; ++j) {
             gameGrid[i][j].addEventListener('click', e => {
@@ -118,7 +123,7 @@ function attachBoxEvents() {
     }
 }
 
-function handleClick(i, j) {
+function boxClickHandler(i, j) {
     const val = gameArray[i][j];
 
     if (val === 'o') return;
@@ -146,25 +151,34 @@ function handleClick(i, j) {
         });
 
         setTimeout(() => {
-            gameFinish(false);
+            finishGame(false);
         }, explosion_time);
 
         return;
     }
 
-    openBox(i, j);
+    if (openBox(i, j)) {
+        finishGame(true);
+        return;
+    }
 
     if (val > 0) return;
 
     for (let temp_i = i - 1; temp_i <= i + 1; ++temp_i) {
+        if (gameFinished) return;
         if (gameArray[temp_i] === undefined) continue;
 
         for (let temp_j = j - 1; temp_j <= j + 1; ++temp_j) {
-            const temp_val = gameArray[temp_i][temp_j];    
+            if (gameFinished) return;
+            const temp_val = gameArray[temp_i][temp_j];
+            
             if (temp_val === undefined) continue;
 
-            if (temp_val === 0) handleClick(temp_i, temp_j);
-            else if (temp_val !== 'o') openBox(temp_i, temp_j);
+            if (temp_val === 0) boxClickHandler(temp_i, temp_j);
+            else if (temp_val !== 'o' && openBox(temp_i, temp_j)) {
+                finishGame(true);
+                return;
+            }
         }
     }
 }
@@ -174,7 +188,7 @@ function openBox(i, j) {
     const box = gameGrid[i][j];
     openBoxUI(box, val);
     gameArray[i][j] = 'o';
-    ++openedBoxes === mineFreeBoxes && gameFinish(true);
+    return ++openedBoxes === mineFreeBoxes;
 }
     
 function openBoxUI(box, val, blastData) {
@@ -221,7 +235,14 @@ function createGame(rows, cols, clickedRow, clickedCol) {
         gameArray.push(a);
     }
 
-    mineFreeBoxes = (rows * cols) - mineMap.length;
+    const totalBoxes = rows * cols;
+    mineFreeBoxes = totalBoxes - mineMap.length;
+
+    // In the extreme case where no mines where added by the random function
+    // call the 'createGame' function again until at least one mine is added.
+    if (mineFreeBoxes === totalBoxes) {
+        return createGame(rows, cols, clickedRow, clickedCol);
+    }
 
     for (let i = 0; i < rows; ++i) {
         for (let j = 0; j < cols; ++j) {
