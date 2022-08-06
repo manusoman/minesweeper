@@ -6,11 +6,18 @@
     <title>Minesweeper</title>
     <link rel="shortcut icon" type="image/x-icon" href="res/favicon.svg" />
     <link rel="stylesheet" href="style.css">
+    <script type="text/javascript" src="IconMap.js" defer></script>
     <script type="text/javascript" src="app.js" defer></script>
 </head>
 <body>
-    <header>            
+    <header id="header">            
         <img id="logo" src="res/minesweeper_logo.svg" alt="minesweeper logo">
+        <div id="gameHeader">
+            <div><h2 id="message"></h2></div>
+            <div>
+                <time id="timer"></time><button id="closeGame">Close Game</button>
+            </div>
+        </div>
     </header>
 
     <main>
@@ -33,10 +40,10 @@
         <div id="game" class="off"></div>
     </main>
 
-    <div id="gameFinish" class="off">
+    <!-- <div id="gameFinish" class="off">
         <h3 id="message"></h3>
         <button id="newGame">Start new game</button>
-    </div>
+    </div> -->
 
     <footer>
         <span id="copyright"></span>
