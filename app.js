@@ -64,7 +64,9 @@ function attach_createGameEvents(gameSizes) {
         document.getElementById(size.type).addEventListener('click', e => {
             header.classList.add('whileGaming');
 
-            message.textContent = 'New Game';
+            message.textContent = 'New Game';            
+            timer.textContent = '0:00';
+            
             gameFrame = document.createElement('div');
             gameFrame.classList.add(size.type);
             
@@ -85,10 +87,10 @@ function attach_createGameEvents(gameSizes) {
 
     document.getElementById('closeGame').addEventListener('click', e => {
         e.stopPropagation();
+        stopTimer();
         
-        document.body.removeChild(explosionBox);
+        gameFinished && document.body.removeChild(explosionBox);
         explosionBox = undefined;
-        gameFinished = true;
 
         gameEle.removeChild(gameFrame);
         gameEle.classList.add('off');
@@ -162,6 +164,7 @@ function clickBox(i, j) {
         const distances = mineMap.map(cord => hypot(cord[0] - i, cord[1] - j));
         let explosion_time = 0;
 
+        finishGame(false);
         setExplosionBox();
 
         // Sort mineMap array based on distances array and then
@@ -169,11 +172,10 @@ function clickBox(i, j) {
         sortDistances(distances);
 
         mineMap.forEach(cord => {
-            setTimeout(() => !gameFinished && explode(cord[0], cord[1]), explosion_time);
+            setTimeout(() => explode(cord[0], cord[1]), explosion_time);
             explosion_time += explosion_delay;
         });
-
-        setTimeout(() => finishGame(false), explosion_time);
+        
         return;
     }
 
@@ -341,10 +343,9 @@ function explode(i, j) {
 
 function createBox(left, top, className) {
     const explBox = document.createElement('div');
-    explBox.style.left = left + 'px';
-    explBox.style.top = top + 'px';
+    explBox.style.left = `${left}px`;
+    explBox.style.top = `${top}px`;
     explBox.classList.add(className);
-    // explBox.classList.add('explBox');
     return explBox;
 }
 
@@ -385,7 +386,9 @@ function animateWin() {
         box.style.top = `${y}px`;
 
         // Explosion
-        set_box_translation(box, x, y, x - gridCenter_x, y - gridCenter_y);
+        setTimeout(() => {            
+            set_box_translation(box, x, y, x - gridCenter_x, y - gridCenter_y);
+        }, 0);
     }
 }
 
@@ -423,15 +426,13 @@ function set_box_translation(explBox, x, y, cx = x - 30, cy = y - 30) {
     const x_offset = (x - cx) * expl_strength;
     const y_offset = (y - cy) * expl_strength;
 
-    explBox.style.left = x + x_offset + 'px';
-    explBox.style.top = y + y_offset + 'px';
+    explBox.style.left = `${ x + x_offset }px`;
+    explBox.style.top = `${ y + y_offset }px`;
     explBox.style.opacity = 0;
 }
 
 function startTimer() {
     const start = Date.now();
-    timer.textContent = '0:00';
-
     const id = setInterval(() => {
         timer.textContent = formatTime(Date.now() - start);
     }, 1000);
@@ -445,7 +446,7 @@ function formatTime(milSecs) {
     const hoursInSecs = hours * 3600;
     const mins = Math.floor((period - hoursInSecs) / 60);
     const seconds = Math.floor(period - hoursInSecs - (mins * 60));
-    return (hours ? hours + ':' + mins : mins) + ':' + seconds;
+    return (hours ? hours + ':' + mins : mins) + ':' + seconds.toString().padStart(2, '0');
 }
 
 function putCopyright() {
