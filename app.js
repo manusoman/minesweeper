@@ -66,7 +66,7 @@ function attach_createGameEvents(gameSizes) {
 
             message.textContent = 'New Game';            
             timer.textContent = '0:00';
-            
+
             gameFrame = document.createElement('div');
             gameFrame.classList.add(size.type);
             
@@ -172,7 +172,7 @@ function clickBox(i, j) {
         sortDistances(distances);
 
         mineMap.forEach(cord => {
-            setTimeout(() => explode(cord[0], cord[1]), explosion_time);
+            setTimeout(() => explosionBox && explode(cord[0], cord[1]), explosion_time);
             explosion_time += explosion_delay;
         });
         
@@ -384,6 +384,12 @@ function animateWin() {
 
         box.style.left = `${x}px`;
         box.style.top = `${y}px`;
+    }
+
+    for (let i = boxCount4icon; i < boxCount; ++i) {
+        const box = boxes[i];
+        const x = box.offsetLeft;
+        const y = box.offsetTop;
 
         // Explosion
         setTimeout(() => {            
