@@ -13,16 +13,20 @@ const colorClasses = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'ei
 const header = document.getElementById('header');
 const message = document.getElementById('message');
 const timer = document.getElementById('timer');
+const configureEle = document.getElementById('configure');
+const gameEle = document.getElementById('game');
 
 let selectedGameSize;
 let gameFrame;
 let gameGrid;
 let gameArray;
+let gameFinished;
+
 let mineMap;
 let mineFreeBoxes;
 let openedBoxes;
-let explosionBox;
-let gameFinished;
+
+let animationContainer;
 
 // Function references that are assigned later
 let handleClick;
@@ -30,19 +34,35 @@ let stopTimer;
 
 putCopyright();
 attach_createGameEvents(gameSizes);
+attach_closeButtonEvent();
 
 
 // Functions =============================================================================
 
 const hasMine = () => Math.random() <= mineRate ? 'm' : 0;
-const getRandomIndex = listLength => Math.floor(Math.random() * listLength);
-const getGridCenterItem = grid => grid[Math.floor(grid.length / 2)][Math.floor(grid[0].length / 2)];
+const getRandomIndex = length => Math.floor(Math.random() * length);
 
 const generateIconMap = () => {
     const { iconWidth, iconHeight, iconMap } = window.IconMap;
     const offset_x = Math.floor((selectedGameSize.cols - iconWidth) / 2);
     const offset_y = Math.floor((selectedGameSize.rows - iconHeight) / 2);
     return iconMap.map(map => [map[0] + offset_y, map[1] + offset_x]);
+};
+
+const formatTime = milSecs => {
+    const period = milSecs * 0.001; // Conversion to seconds
+    const hours = Math.floor(period / 3600);
+    const hoursInSecs = hours * 3600;
+    const mins = Math.floor((period - hoursInSecs) / 60);
+    const seconds = Math.floor(period - hoursInSecs - (mins * 60));
+    return (hours ? hours + ':' + mins : mins) + ':' + seconds.toString().padStart(2, '0');
+};
+
+const scroll2GridCenter = () => {
+    const i = Math.floor(selectedGameSize.rows / 2);
+    const j = Math.floor(selectedGameSize.cols / 2);
+    const centerBox = gameGrid[i][j];
+    centerBox.scrollIntoView({ block :'center', inline :'center' });
 };
 
 const finishGame = isSuccess => {
@@ -57,9 +77,6 @@ const finishGame = isSuccess => {
 };
 
 function attach_createGameEvents(gameSizes) {
-    const gameEle = document.getElementById('game');
-    const configureEle = document.getElementById('configure');
-
     gameSizes.forEach(size => {
         document.getElementById(size.type).addEventListener('click', e => {
             header.classList.add('whileGaming');
@@ -84,13 +101,15 @@ function attach_createGameEvents(gameSizes) {
             e.stopPropagation();
         }, true);
     });
+}
 
+function attach_closeButtonEvent() {
     document.getElementById('closeGame').addEventListener('click', e => {
         e.stopPropagation();
         stopTimer();
         
-        gameFinished && document.body.removeChild(explosionBox);
-        explosionBox = undefined;
+        gameFinished && document.body.removeChild(animationContainer);
+        animationContainer = undefined;
 
         gameEle.removeChild(gameFrame);
         gameEle.classList.add('off');
@@ -147,10 +166,10 @@ function attachBoxEvents() {
     }
 }
 
-function setExplosionBox() {
-    explosionBox = document.createElement('div');
-    explosionBox.classList.add('explosionBox');
-    document.body.appendChild(explosionBox);
+function setAnimationContainer(className) {
+    animationContainer = document.createElement('div');
+    animationContainer.classList.add(className);
+    document.body.appendChild(animationContainer);
 }
 
 function clickBox(i, j) {
@@ -165,14 +184,14 @@ function clickBox(i, j) {
         let explosion_time = 0;
 
         finishGame(false);
-        setExplosionBox();
+        setAnimationContainer('explosionBox', document.body)
 
         // Sort mineMap array based on distances array and then
         // explode them with the given delay
         sortDistances(distances);
 
         mineMap.forEach(cord => {
-            setTimeout(() => explosionBox && explode(cord[0], cord[1]), explosion_time);
+            setTimeout(() => animationContainer && explode(cord[0], cord[1]), explosion_time);
             explosion_time += explosion_delay;
         });
         
@@ -310,7 +329,7 @@ function explode(i, j) {
     const explBox = createBox(c_left, c_top, 'explBox');
 
     // Animate the box
-    explosionBox.appendChild(explBox);
+    animationContainer.appendChild(explBox);
     setTimeout(() => {
         openBoxUI(gameGrid[i][j], gameArray[i][j], 'minebox');
         gameArray[i][j] = 'o';
@@ -331,7 +350,7 @@ function explode(i, j) {
             const explBox = createBox(left, top, 'explBox');
 
             // Animate the box
-            explosionBox.appendChild(explBox);
+            animationContainer.appendChild(explBox);
             setTimeout(() => {
                 openBoxUI(gameGrid[a][b], gameArray[a][b], 'nearBox');
                 gameArray[a][b] = 'o';
@@ -351,73 +370,57 @@ function createBox(left, top, className) {
 
 function animateWin() {
     const iconMap = generateIconMap();
-    const boxCount4icon = iconMap.length;
-    const requiredBoxCount = boxCount4icon + 20; // 20 boxes are for the explosion
-    const fragment = createAnimationBoxes(requiredBoxCount);
-    const gridCenter_box = getGridCenterItem(gameGrid);
-    const gridCenter_x = gridCenter_box.offsetLeft;
-    const gridCenter_y = gridCenter_box.offsetTop;
+    const boxCount4icons = iconMap.length;
+    const fragment = createAnimationBoxes(boxCount4icons);
 
-    setExplosionBox();
-    explosionBox.appendChild(fragment);
-    const boxes = explosionBox.children;
-    const boxCount = boxes.length;
+    setAnimationContainer('winIconAnimContainer');
+    animationContainer.appendChild(fragment);
+    scroll2GridCenter();
 
     // Make the grid blank
     gameFrame.classList.add('won');
 
+    const boxes = animationContainer.children;
+    const boxCount = boxes.length;
+    let i = 0;
+
     // Move boxes to form the icon
-    for (let i = 0; i < boxCount4icon; ++i) {
-        const box = boxes[i];
-        const [x, y] = getScreenCordinatesForBox(iconMap[i][0], iconMap[i][1]);        
+    while (i < boxCount4icons) {
+        const [x, y] = getScreenCordinatesForBox(iconMap[i][0], iconMap[i][1]);
+        const box = boxes[i++];
 
         box.style.left = `${x}px`;
         box.style.top = `${y}px`;
     }
 
-    // Move the rest of the boxes to random positions
-    // in the icon and then explode them
-    for (let i = boxCount4icon; i < boxCount; ++i) {
-        const box = boxes[i];
-        const ri = getRandomIndex(boxCount4icon);
+    // If there are extra boxes, move it to random positions in the icon
+    while (i < boxCount) {
+        const ri = getRandomIndex(boxCount4icons);
         const [x, y] = getScreenCordinatesForBox(iconMap[ri][0], iconMap[ri][1]);
+        const box = boxes[i++];
 
         box.style.left = `${x}px`;
         box.style.top = `${y}px`;
-    }
-
-    for (let i = boxCount4icon; i < boxCount; ++i) {
-        const box = boxes[i];
-        const x = box.offsetLeft;
-        const y = box.offsetTop;
-
-        // Explosion
-        setTimeout(() => {            
-            set_box_translation(box, x, y, x - gridCenter_x, y - gridCenter_y);
-        }, 0);
     }
 }
 
-function createAnimationBoxes(requiredBoxCount) {
+function createAnimationBoxes(boxCount4icons) {
     const mineCount = mineMap.length;
     const fragment = new DocumentFragment();
+    let i = 0;
 
-    for (let i = 0; i < mineCount; ++i) {
-        const boxLocation = mineMap[i];
+    while (i < mineCount) {
+        const boxLocation = mineMap[i++];
         const [x, y] = getScreenCordinatesForBox(boxLocation[0], boxLocation[1]);
         const box = createBox(x, y, 'mockBox');
         fragment.appendChild(box);
     }
 
-    if (mineCount < requiredBoxCount) {
-        let diff = requiredBoxCount - mineCount;
-
-        while (diff--) {
-            const boxLocation = mineMap[Math.floor(Math.random() * mineCount)];
-            const [x, y] = getScreenCordinatesForBox(boxLocation[0], boxLocation[1]);
-            const box = createBox(x, y, 'mockBox');
-            fragment.appendChild(box);
-        }
+    while (i++ < boxCount4icons) {
+        const boxLocation = mineMap[getRandomIndex(mineCount)];
+        const [x, y] = getScreenCordinatesForBox(boxLocation[0], boxLocation[1]);
+        const box = createBox(x, y, 'mockBox');
+        fragment.appendChild(box);
     }
 
     return fragment;
@@ -444,15 +447,6 @@ function startTimer() {
     }, 1000);
 
     stopTimer = () => clearInterval(id);
-}
-
-function formatTime(milSecs) {
-    const period = milSecs * 0.001; // Conversion to seconds
-    const hours = Math.floor(period / 3600);
-    const hoursInSecs = hours * 3600;
-    const mins = Math.floor((period - hoursInSecs) / 60);
-    const seconds = Math.floor(period - hoursInSecs - (mins * 60));
-    return (hours ? hours + ':' + mins : mins) + ':' + seconds.toString().padStart(2, '0');
 }
 
 function putCopyright() {
