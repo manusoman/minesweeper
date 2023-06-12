@@ -133,6 +133,8 @@ main {
 #game {
     padding: 0px 20px;
     text-align: center;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .small {

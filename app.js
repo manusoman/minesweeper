@@ -16,11 +16,11 @@ const timer = document.getElementById('timer');
 const configureEle = document.getElementById('configure');
 const gameEle = document.getElementById('game');
 
+let gameFinished = true;
 let selectedGameSize;
 let gameFrame;
 let gameGrid;
 let gameArray;
-let gameFinished;
 
 let mineMap;
 let mineFreeBoxes;
@@ -462,5 +462,8 @@ function putCopyright() {
 
     spanEle = document.getElementById('copyright');
 }
+
+
+window.onbeforeunload = e => { !gameFinished && e.preventDefault(); };
 
 })();
